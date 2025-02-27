@@ -1,0 +1,758 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="initial-scale=1,maximum-scale=1,user-scalable=no"
+    />
+    <title>UC Merced Map</title>
+
+    <link
+      rel="stylesheet"
+      href="https://js.arcgis.com/4.31/esri/themes/light/main.css"
+    />
+    <script src="https://js.arcgis.com/4.31/"></script>
+
+    <style>
+      html,
+      body {
+        margin: 0;
+        padding: 0;
+        height: 100%;
+        width: 100%;
+        overflow: hidden;
+      }
+
+      #container {
+        display: flex;
+        height: 100vh;
+        width: 100vw;
+      }
+
+      #sidebar {
+        width: 340px;
+        height: 100%;
+        background-color: #f8f8f8;
+        overflow-y: auto;
+        padding: 15px;
+      }
+
+      #viewDiv {
+        flex-grow: 1;
+      }
+
+      .list-item {
+        cursor: pointer;
+        padding: 5px;
+        border-bottom: 1px solid #ccc;
+        display: flex;
+      }
+
+      .list-item:hover {
+        background-color: #9f98ff;
+      }
+      .category {
+        border-bottom: solid 2px black;
+        cursor: pointer;
+        padding: 4px 0;
+        font-weight: 500;
+        display: flex;
+      }
+      .category:hover {
+        background-color: #bcdaff;
+      }
+      .back {
+        cursor: pointer;
+
+        font-weight: 500;
+
+        display: flex;
+      }
+      .back-title {
+        color: #4ea4ff;
+        font-size: 26px;
+        margin-left: 5px;
+      }
+      .category-title {
+        flex-grow: 1;
+        display: flex;
+        align-items: center;
+      }
+      .arrowContainer {
+        display: flex;
+        align-items: center;
+        justify-self: center;
+      }
+      .arrow {
+        height: 30px;
+        width: 20px;
+        display: block;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div id="container">
+      <div id="sidebar"></div>
+      <!-- map renders here -->
+      <div id="viewDiv"></div>
+    </div>
+    <script>
+      let centerCordinates;
+      let zoomLevel;
+      let fontSize;
+
+      // Update base url to what ever you need it, this will depend on how you are hosting it, alternatively you can use full path instead either here or in the
+      // json file, points.json and shapes.json. Currently I have it hosted on my website for demonstration purposes only.
+      let baseURL = "https://flavioherrera.com/ucmercedmap";
+
+      //very basic way to determin if mobile or laptop, checks aspect ratio. Has different css styling and zoom.
+      function detectDeviceType() {
+        const width = window.innerWidth;
+        const height = window.innerHeight;
+        const aspectRatio = width / height;
+        const pixelRatio = window.devicePixelRatio;
+
+        if (aspectRatio < 0.8 || (width < 800 && pixelRatio > 1)) {
+          document.getElementById("container").style.flexDirection =
+            "column-reverse";
+          document.getElementById("sidebar").style.width = "95%";
+          document.getElementById("sidebar").style.height = "60%";
+          centerCordinates = [-120.428845, 37.363169];
+          zoomLevel = 16;
+          fontSize = 10;
+          return "smartphone";
+        } else {
+          centerCordinates = [-120.424445, 37.363569];
+          zoomLevel = 17;
+          fontSize = 14;
+          return "laptop";
+        }
+      }
+
+      //loads map on window load
+      window.onload = function () {
+        //checks url, in development you probably wont need this anymore
+        const currentUrl = window.location.href;
+        if (currentUrl.includes("http://127.0.0.1:5500/")) {
+          baseURL = "http://127.0.0.1:5500/";
+        }
+        const deviceType = detectDeviceType();
+        if (deviceType === "smartphone") {
+          document.body.style.fontSize = "14px";
+        } else {
+          document.body.style.fontSize = "18px";
+        }
+
+        //setting up map
+
+        require([
+          "esri/Map",
+          "esri/views/MapView",
+          "esri/Graphic",
+          "esri/layers/GraphicsLayer",
+          "esri/widgets/Popup",
+        ], function (Map, MapView, Graphic, GraphicsLayer, Popup) {
+          // Create the Map currently using open street map
+          const map = new Map({
+            basemap: "osm",
+          });
+
+          // Create View
+
+          const view = new MapView({
+            container: "viewDiv",
+            map: map,
+            center: centerCordinates,
+            zoom: zoomLevel,
+            popup: {
+              dockEnabled: false,
+              defaultPopupTemplateEnabled: true,
+            },
+          });
+
+          // create popup instance
+
+          view.popup = new Popup({ view: view });
+
+          // create different graphics layers
+
+          // one note, there are two types of lables, not the best naming convertion, there are the lables associated with the polygons and those that are
+          // stand alone labels which have their own json file.
+
+          // the goal was that the standalone lables dont require any assocciation to any polygons, you can think of them as more of like bookmarks.
+
+          const polygonsLayer = new GraphicsLayer();
+          const pointsLayer = new GraphicsLayer();
+          const labelsLayer = new GraphicsLayer();
+          map.addMany([polygonsLayer, pointsLayer, labelsLayer]);
+
+          let polygonGraphics = [];
+          let pointGraphics = [];
+          let labelGraphics = [];
+
+          // fetch json file and create polygon graphics, and add them to layer
+
+          const p1 = fetch("./shapefile/shapes.json")
+            .then((response) => response.json())
+            .then((geojsonPolygonsArray) => {
+              geojsonPolygonsArray.forEach((featureCollection, fcIndex) => {
+                let polygonCoords = [];
+                let labelGraphic;
+
+                const color = featureCollection.properties?.color || "gray";
+                const uniqueId = "polygon-" + fcIndex;
+                const uniqueParentPath = `${featureCollection.properties?.category}/${featureCollection.properties?.name}`;
+
+                // creating graphic label for each polygon, we pass in polygon coordinates to calculate centroid to position lable in the middle of the polygon
+                // we also create a uniqueParentPath to be able to reference the lable with its parent polygon, this allows us to look for the lable
+                // and hide it along side the polygon we want to hide
+
+                // other stuff is passed.
+                featureCollection.features.forEach((feature) => {
+                  polygonCoords.push(feature.geometry.coordinates[0]);
+                  labelGraphic = createNameGraphic(
+                    feature.geometry.coordinates[0],
+                    featureCollection.properties?.name || "default label",
+                    uniqueId,
+                    uniqueParentPath
+                  );
+                });
+
+                // technically we dont need this as the polygon already has properties, we could pass that all together, feel free to remove this and use
+                // the polygon properties in the json file instead
+                // featureCollection holds all  the polygons from the json
+
+                const properties = {
+                  name: featureCollection.properties?.name || "default label",
+                  description: "temp description",
+                  content_url: `${baseURL}${
+                    featureCollection.properties?.content_url ||
+                    "/popups/default_popup.html"
+                  }`,
+                  category: featureCollection.properties?.category,
+                };
+
+                // pass properties and other parameters to create polygon graphic, code needs a bit of cleaning and there are
+                // some redandent lines of code or ways you can make this cleaner.
+                const polygonGraphic = createPolygonGraphic(
+                  polygonCoords,
+                  properties,
+                  color,
+                  fcIndex,
+                  0,
+                  uniqueId,
+                  view
+                );
+
+                // push all changes to layers
+                polygonsLayer.add(polygonGraphic);
+                polygonGraphics.push(polygonGraphic);
+
+                if (labelGraphic) {
+                  labelsLayer.add(labelGraphic);
+                }
+              });
+            })
+            .catch((err) => {
+              console.error("Error loading polygons (shapes.json):", err);
+            });
+
+          // load up points, very similar logic as the previous function.
+
+          const p2 = fetch("./shapefile/points.json")
+            .then((response) => response.json())
+            .then((geojsonPointsArray) => {
+              geojsonPointsArray.forEach((featureCollection, fcIndex) => {
+                const properties = {
+                  name:
+                    `${featureCollection.properties?.name}` || "default label",
+                  description: "temp description",
+                  imgURL:
+                    featureCollection.properties?.imgURL ||
+                    `${baseURL}/placeholder.png`,
+                  content_url: `${baseURL}${
+                    featureCollection.properties?.content_url ||
+                    "/popups/default_popup.html"
+                  }`,
+                  category: featureCollection.properties?.category,
+                };
+
+                featureCollection.features.forEach((feature, fIndex) => {
+                  if (feature.geometry.type === "Point") {
+                    const coords = feature.geometry.coordinates;
+                    const pointGraphic = createPointGraphic(
+                      coords,
+                      properties,
+                      fcIndex,
+                      fIndex
+                    );
+                    pointsLayer.add(pointGraphic);
+                    pointGraphics.push(pointGraphic);
+                  }
+                });
+              });
+            })
+            .catch((err) => {
+              console.error("Error loading points (points.json):", err);
+            });
+
+          // load up labels, very similar logic as the previous function.
+
+          const p3 = fetch("./shapefile/labels.json")
+            .then((response) => response.json())
+            .then((labelsArray) => {
+              labelsArray.forEach((featureCollection, fcIndex) => {
+                featureCollection.features.forEach((feature, fIndex) => {
+                  if (feature.geometry.type === "Point") {
+                    const coords = feature.geometry.coordinates;
+                    const labelGraphic = createLabelGraphic(
+                      coords,
+                      feature,
+                      fcIndex,
+                      fIndex
+                    );
+                    if (labelGraphic) {
+                      labelsLayer.add(labelGraphic);
+
+                      labelGraphics.push(labelGraphic);
+                    }
+                  }
+                });
+              });
+            })
+            .catch((err) => {
+              console.error("Error loading labels (labels.json):", err);
+            });
+
+          // once all of the data has been added to the graphic layers we can build side bar.
+
+          Promise.all([p1, p2, p3]).then(() => {
+            const allFeatures = [
+              ...polygonGraphics,
+              ...pointGraphics,
+              ...labelGraphics,
+            ];
+
+            buildNestedSidebarFromJson(
+              allFeatures,
+              document.getElementById("sidebar")
+            );
+          });
+
+          //find the center of the polygon
+
+          function getPolygonCentroid(ring) {
+            let signedArea = 0;
+            let cx = 0;
+            let cy = 0;
+
+            if (
+              ring.length > 0 &&
+              (ring[0][0] !== ring[ring.length - 1][0] ||
+                ring[0][1] !== ring[ring.length - 1][1])
+            ) {
+              ring.push([...ring[0]]);
+            }
+
+            for (let i = 0; i < ring.length - 1; i++) {
+              const [x0, y0] = ring[i];
+              const [x1, y1] = ring[i + 1];
+              const cross = x0 * y1 - x1 * y0;
+              signedArea += cross;
+              cx += (x0 + x1) * cross;
+              cy += (y0 + y1) * cross;
+            }
+
+            signedArea = signedArea / 2;
+            cx = cx / (6 * signedArea);
+            cy = cy / (6 * signedArea);
+
+            return [cx, cy];
+          }
+
+          // handles creating name graphic for the polygons
+
+          function createNameGraphic(ring, labelText, parentId, parentPath) {
+            const [cx, cy] = getPolygonCentroid(ring);
+            return new Graphic({
+              geometry: {
+                type: "point",
+                x: cx,
+                y: cy,
+                spatialReference: { wkid: 3857 },
+              },
+              attributes: {
+                name: labelText || "Label",
+                description: "description",
+                id: `label-${parentId}`,
+                parentId: parentId,
+                parentPath: parentPath,
+              },
+              symbol: {
+                type: "text",
+                color: "black",
+                haloColor: "white",
+                haloSize: "2px",
+                text: labelText || "Label",
+                font: {
+                  size: fontSize,
+                  family: "sans-serif",
+                  weight: "bold",
+                },
+              },
+            });
+          }
+
+          // creates polygon graphic and has popup template
+
+          function createPolygonGraphic(
+            rings,
+            props,
+            color,
+            fcIndex,
+            fIndex,
+            uniqueId
+          ) {
+            return new Graphic({
+              geometry: {
+                type: "polygon",
+                rings: rings,
+                spatialReference: { wkid: 3857 },
+              },
+              attributes: {
+                id: uniqueId,
+                name: props.name || `Polygon ${fcIndex}-${fIndex}`,
+                description: props.description || "",
+                content_url: props.content_url || null,
+                category: props.category || "/Uncategorized",
+              },
+              symbol: {
+                type: "simple-fill",
+                color: color,
+                outline: {
+                  color: "black",
+                  width: 1,
+                },
+              },
+              popupTemplate: {
+                title: "{name}",
+                content: (event) => {
+                  const g = event.graphic;
+                  let baseContent = `<div>No popup content found</div>`;
+                  if (g.attributes.content_url) {
+                    // fetches the popup url and injects html into the popup using the content url has some basecontent if the popup fails to load
+                    return fetch(g.attributes.content_url)
+                      .then((res) => res.text())
+                      .then(
+                        (html) => `<div class="popup-content">${html}</div>`
+                      )
+                      .catch((err) => {
+                        console.error("Error loading popup content:", err);
+                        return (
+                          baseContent +
+                          `<p style="color:red;">Error loading additional details.</p>`
+                        );
+                      });
+                  } else {
+                    return baseContent;
+                  }
+                },
+              },
+            });
+          }
+
+          //create point graphic so this is for like the parking pay stations and ev charging stations
+
+          function createPointGraphic(coords, props, fcIndex, fIndex) {
+            return new Graphic({
+              geometry: {
+                type: "point",
+                x: coords[0],
+                y: coords[1],
+                spatialReference: { wkid: 3857 },
+              },
+              attributes: {
+                name: `${props.name}-${fIndex}` || `Point ${fcIndex}-${fIndex}`,
+                description: props.description || "",
+                content_url: props.content_url || null,
+                category: props.category || "/Uncategorized",
+              },
+              symbol: {
+                type: "picture-marker",
+                url: props.imgURL,
+                width: "24px",
+                height: "24px",
+              },
+              popupTemplate: {
+                title: "{name}",
+                content: (event) => {
+                  const g = event.graphic;
+                  let baseContent = `
+                      <p><b>Description:</b> ${g.attributes.description}</p>
+                      <p><i>Coordinates:</i> [${g.geometry.x.toFixed(
+                        2
+                      )}, ${g.geometry.y.toFixed(2)}]</p>
+                    `;
+                  if (g.attributes.content_url) {
+                    // same logic as previous function popup template
+                    return fetch(g.attributes.content_url)
+                      .then((res) => res.text())
+                      .then(
+                        (html) => `<div class="popup-content">${html}</div>`
+                      )
+                      .catch((err) => {
+                        console.error("Error loading popup content:", err);
+                        return (
+                          baseContent +
+                          `<p style="color:red;">Error loading additional details.</p>`
+                        );
+                      });
+                  } else {
+                    return baseContent;
+                  }
+                },
+              },
+            });
+          }
+
+          // currently there is one label so i just returned description of uc merced, however if you want more
+          // labels you would follow same logic as previous functions and fetch html page or have it in the json object.
+          function createLabelGraphic(coords, feature, fcIndex, fIndex) {
+            const properties = feature.properties || {};
+            const labelText = properties.Label || `Label ${fcIndex}-${fIndex}`;
+
+            if (properties.display) {
+              return new Graphic({
+                geometry: {
+                  type: "point",
+                  x: coords[0],
+                  y: coords[1],
+                  spatialReference: { wkid: 3857 },
+                },
+                attributes: {
+                  name: labelText,
+                  description: properties.Description || "",
+                  category: properties.category || "/Uncategorized/Labels",
+                },
+                symbol: {
+                  type: "text",
+                  color: "black",
+                  haloColor: "white",
+                  haloSize: "2px",
+                  text: labelText,
+                  font: {
+                    size: 14,
+                    family: "sans-serif",
+                    weight: "bold",
+                  },
+                },
+                popupTemplate: {
+                  title: "{name}",
+                  content: (event) => {
+                    const g = event.graphic;
+                    return `
+                       A research university is a community bound by learning, 
+                       discovery and engagement. As the first American student-centered
+                        research university built in the 21st century, UC Merced's strong 
+                        graduate and research programs mesh with high-quality undergraduate
+                         programs. New knowledge increasingly depends on links among th
+                          disciplines, working together on questions that transcend the
+                           traditional disciplines. UC Merced fosters and encourage
+                           s cross-disciplinary inquiry and discovery.
+                      `;
+                  },
+                },
+              });
+            }
+          }
+
+          // handles building the sidefar, takes in two arguments, the features / graphic laters, and sidebar
+          function buildNestedSidebarFromJson(features, sidebar) {
+            //create tree for nested sidebar
+            const categoryTree = {};
+
+            features.forEach((feature) => {
+              const categoryPath =
+                feature.attributes?.category || "/Uncategorized";
+              const pathParts = categoryPath.split("/").filter(Boolean);
+
+              const uniqueKey = `${categoryPath}/${
+                feature.attributes?.name || "Unnamed"
+              }`;
+              feature.uniqueKey = uniqueKey;
+
+              let currentNode = categoryTree;
+              pathParts.forEach((part, index) => {
+                if (!currentNode[part]) {
+                  currentNode[part] = {};
+                }
+                if (index === pathParts.length - 1) {
+                  if (!currentNode[part].items) {
+                    currentNode[part].items = [];
+                  }
+                  currentNode[part].items.push(feature);
+                }
+                currentNode = currentNode[part];
+              });
+            });
+
+            const pathStack = [{ nodeName: "UC Merced", node: categoryTree }];
+
+            //reder the sidebar
+            function renderCurrentNode() {
+              sidebar.innerHTML = "";
+
+              const currentEntry = pathStack[pathStack.length - 1];
+              const currentNode = currentEntry.node;
+              const currentName = currentEntry.nodeName;
+
+              const headerDiv = document.createElement("div");
+              headerDiv.style.fontWeight = "bold";
+              headerDiv.style.marginBottom = "8px";
+              headerDiv.textContent = `Current Category: ${currentName}`;
+              sidebar.appendChild(headerDiv);
+
+              if (pathStack.length > 1) {
+                const backButton = document.createElement("div");
+
+                backButton.innerHTML = `
+                <div class="back">
+                   <div class="arrowContainer"><img src="https://www.svgrepo.com/show/27797/right-arrow.svg/" class="arrow" style=" transform: scaleX(-1);"></div>
+                <div class="back-title">Back</div> 
+               
+                </div>
+                `;
+                backButton.addEventListener("click", () => {
+                  pathStack.pop();
+                  renderCurrentNode();
+                });
+                sidebar.appendChild(backButton);
+              }
+
+              Object.keys(currentNode).forEach((key) => {
+                if (key === "items") return;
+
+                const catDiv = document.createElement("div");
+                catDiv.innerHTML = `
+                <div class="category">
+                <div class="category-title">${key}</div> 
+                <div class="arrowContainer"><img src="https://www.svgrepo.com/show/27797/right-arrow.svg/" class="arrow"></div>
+                </div>
+                `;
+
+                catDiv.addEventListener("click", () => {
+                  pathStack.push({ nodeName: key, node: currentNode[key] });
+                  renderCurrentNode();
+                });
+
+                sidebar.appendChild(catDiv);
+              });
+
+              if (currentNode.items) {
+                currentNode.items.forEach((feature) => {
+                  const listItem = document.createElement("div");
+                  listItem.className = "list-item";
+                  listItem.style.display = "flex";
+                  listItem.style.alignItems = "center";
+                  listItem.style.marginLeft = "10px";
+                  listItem.style.marginBottom = "4px";
+
+                  const nameDiv = document.createElement("div");
+                  nameDiv.textContent = feature.attributes?.name || "Unnamed";
+                  nameDiv.style.flexGrow = "1";
+
+                  const toggleButton = document.createElement("button");
+                  toggleButton.id = `toggle-${feature.uniqueKey}`;
+                  toggleButton.style.marginLeft = "10px";
+                  toggleButton.style.cursor = "pointer";
+                  toggleButton.textContent =
+                    feature.visible === false ? "Show" : "Hide";
+
+                  function toggleVisibility() {
+                    const isVisible = feature.visible;
+                    feature.visible = !isVisible;
+
+                    const graphic = labelsLayer.graphics.find(
+                      (g) =>
+                        g.attributes.parentPath ===
+                        `${feature.attributes.category}/${feature.attributes.name}`
+                    );
+                    if (graphic) {
+                      graphic.visible = !graphic.visible;
+                      toggleButton.textContent = graphic.visible
+                        ? "Hide"
+                        : "Show";
+                      listItem.style.opacity = graphic.visible ? "1" : "0.5";
+                    } else {
+                      toggleButton.textContent = isVisible ? "Show" : "Hide";
+                      listItem.style.opacity = isVisible ? "0.5" : "1";
+                    }
+                  }
+
+                  toggleButton.addEventListener("click", (e) => {
+                    e.stopPropagation();
+                    toggleVisibility();
+                  });
+
+                  listItem.addEventListener("click", () => {
+                    document.querySelectorAll(".list-item").forEach((el) => {
+                      el.style.backgroundColor = "white";
+                    });
+                    listItem.style.backgroundColor = "gray";
+
+                    // handles popup when clicked on item in sidebar, also zooms to that feature.
+
+                    const isPoint = feature.geometry.type === "point";
+                    const isPolygon = feature.geometry.type === "polygon";
+                    const isLabel = feature.symbol?.type === "text";
+
+                    let popupLocation = isLabel
+                      ? {
+                          x: feature.geometry.x,
+                          y: feature.geometry.y + 8,
+                          spatialReference: { wkid: 3857 },
+                        }
+                      : isPoint
+                      ? {
+                          x: feature.geometry.x,
+                          y: feature.geometry.y + 5,
+                          spatialReference: { wkid: 3857 },
+                        }
+                      : feature.geometry.extent.center;
+
+                    view
+                      .goTo({
+                        target: feature.geometry,
+                        zoom: isLabel
+                          ? 16
+                          : isPoint
+                          ? 19
+                          : isPolygon
+                          ? 17
+                          : undefined,
+                      })
+                      .then(() => {
+                        view.popup.location = popupLocation;
+                        view.popup.open({
+                          features: [feature],
+                          location: popupLocation,
+                        });
+                      });
+                  });
+
+                  listItem.appendChild(nameDiv);
+                  listItem.appendChild(toggleButton);
+                  sidebar.appendChild(listItem);
+                });
+              }
+            }
+
+            renderCurrentNode();
+          }
+        });
+      };
+    </script>
+  </body>
+</html>

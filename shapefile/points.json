@@ -1,0 +1,119 @@
+[
+  {
+    "type": "FeatureCollection",
+    "crs": { "type": "name", "properties": { "name": "EPSG:3857" } },
+    "properties": {
+      "name": "Parking Pay Station",
+      "content_url": "/popups/parking_pay_station_down.html",
+      "category": "/Parking and Transportation/Under Repair",
+      "imgURL": "https://thumbs.dreamstime.com/b/parking-card-pay-station-concept-icon-vector-illustration-214497240.jpg"
+    },
+    "features": [
+      {
+        "type": "Feature",
+        "id": 0,
+        "geometry": {
+          "type": "Point",
+          "coordinates": [-13405962.21535241, 4489563.1433956549]
+        },
+        "properties": { "FID": 0, "Id": 0 }
+      }
+    ]
+  },
+  {
+    "type": "FeatureCollection",
+    "crs": { "type": "name", "properties": { "name": "EPSG:3857" } },
+    "properties": {
+      "name": "Parking Pay Station",
+      "content_url": "/popups/parking_pay_station.html",
+      "category": "/Parking and Transportation/Parking Permit Dispensers",
+      "imgURL": "https://thumbs.dreamstime.com/b/parking-card-pay-station-concept-icon-vector-illustration-214497240.jpg"
+    },
+    "features": [
+      {
+        "type": "Feature",
+        "id": 1,
+        "geometry": {
+          "type": "Point",
+          "coordinates": [-13405964.439560067, 4489474.543735493]
+        },
+        "properties": { "FID": 1, "Id": 0 }
+      },
+      {
+        "type": "Feature",
+        "id": 2,
+        "geometry": {
+          "type": "Point",
+          "coordinates": [-13406148.767511182, 4489474.543735493]
+        },
+        "properties": { "FID": 2, "Id": 0 }
+      },
+      {
+        "type": "Feature",
+        "id": 3,
+        "geometry": {
+          "type": "Point",
+          "coordinates": [-13406149.984197328, 4489559.7117657112]
+        },
+        "properties": { "FID": 3, "Id": 0 }
+      },
+      {
+        "type": "Feature",
+        "id": 4,
+        "geometry": {
+          "type": "Point",
+          "coordinates": [-13406326.305813713, 4489840.563314789]
+        },
+        "properties": { "FID": 4, "Id": 0 }
+      },
+      {
+        "type": "Feature",
+        "id": 5,
+        "geometry": {
+          "type": "Point",
+          "coordinates": [-13406334.061452512, 4489682.8606921434]
+        },
+        "properties": { "FID": 5, "Id": 0 }
+      },
+      {
+        "type": "Feature",
+        "id": 6,
+        "geometry": {
+          "type": "Point",
+          "coordinates": [-13406304.729588903, 4489539.3139661429]
+        },
+        "properties": { "FID": 6, "Id": 0 }
+      }
+    ]
+  },
+  {
+    "type": "FeatureCollection",
+    "crs": { "type": "name", "properties": { "name": "EPSG:3857" } },
+    "properties": {
+      "name": "EV Charging Station",
+      "content_url": "/popups/ev_charging_station.html",
+      "category": "/Parking and Transportation/Electric Vehicle Charging",
+      "imgURL": "https://upload.wikimedia.org/wikipedia/commons/7/7d/Symbol_electric_vehicle_charging_stations.jpg"
+    },
+    "features": [
+      {
+        "type": "Feature",
+        "id": 0,
+        "geometry": {
+          "type": "Point",
+          "coordinates": [-13405708.83751199, 4490276.4595919941]
+        },
+        "properties": { "FID": 0, "Id": 0 }
+      },
+      {
+        "type": "Feature",
+        "id": 1,
+        "geometry": {
+          "type": "Point",
+          "coordinates": [-13405716.343783945, 4490281.0602102876]
+        },
+        "properties": { "FID": 1, "Id": 0 }
+      }
+    ]
+  }
+]

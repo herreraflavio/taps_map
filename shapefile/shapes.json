@@ -38,6 +38,7 @@
       "color": "#00440091",
       "name": "Bellevue Lot-Green Zone",
       "category": "/Parking and Transportation/Parking",
+      "nameOffset": [0, -30],
       "content_url": "/popups/bellevue_lot_green_zone.html"
     },
     "features": [
@@ -211,6 +212,7 @@
     "properties": {
       "color": "#ffa50085",
       "name": "Library Lot 1-Gold Zone",
+      "nameFontSize": 13,
       "category": "/Parking and Transportation/Parking",
       "content_url": "/popups/library_lot_1_gold_zone.html"
     },
@@ -247,6 +249,7 @@
     "properties": {
       "color": "#ffa50085",
       "name": "Library Lot 2-Gold Zone",
+      "nameFontSize": 13,
       "category": "/Parking and Transportation/Parking",
       "content_url": "/popups/library_lot_2_gold_zone.html"
     },
@@ -517,7 +520,9 @@
     "crs": { "type": "name", "properties": { "name": "EPSG:3857" } },
     "properties": {
       "color": "#ff325685",
-      "name": "Kolligian Library Building",
+      "name": "Kolligian Library",
+      "nameFontSize": 11,
+      "nameOffset": [7, -10],
       "category": "/buildings",
       "content_url": "/popups/kolligian_library_building.html"
     },

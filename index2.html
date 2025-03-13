@@ -38,8 +38,8 @@
 
       #container {
         display: flex;
-        height: 100vh;
-        width: 100vw;
+        height: 100%;
+        width: 100%;
       }
 
       #sidebar {
@@ -1938,7 +1938,7 @@
               const headerDiv = document.createElement("div");
               headerDiv.style.fontWeight = "bold";
               headerDiv.style.marginBottom = "8px";
-              headerDiv.textContent = `Current Category: ${currentName}`;
+              headerDiv.textContent = `${currentName}`;
               sidebar.appendChild(headerDiv);
 
               if (pathStack.length > 1) {

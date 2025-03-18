@@ -21,6 +21,9 @@
         padding: 0;
         height: 100%;
         width: 100%;
+        font-size: 18px;
+        display: flex;
+        flex-direction: column;
         overflow: hidden;
       }
 
@@ -38,16 +41,16 @@
 
       #container {
         display: flex;
-        height: 100vh;
-        width: 100vw;
+        height: calc(100% - 60px);
+        width: 100%;
       }
 
       #sidebar {
-        width: 340px;
-        height: 100%;
+        width: 25%;
+        height: calc(100% - 30px);
         background-color: #f8f8f8;
-        overflow-y: auto;
         padding: 15px;
+        overflow-y: scroll;
       }
 
       #viewDiv {
@@ -102,10 +105,44 @@
         width: 20px;
         display: block;
       }
+
+      /* header styles */
+      .header-container {
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        background-color: #002856;
+      }
+      .header-image {
+        width: 50px;
+        padding: 5px;
+        padding-left: 15px;
+      }
     </style>
   </head>
 
   <body>
+    <div class="header-container">
+      <div>
+        <a
+          href="https://taps.ucmerced.edu/"
+          target="_blank"
+          style="display: flex"
+          ><img
+            class="header-image"
+            src="https://ucmerced.maps.arcgis.com/sharing/rest/content/items/0439419af51b4fa7ada0df6f92ae87af/resources/media/instantAppsConfigPanel_1677515242929_TAPS-Logo_December_2022-1.png"
+        /></a>
+      </div>
+
+      <div>
+        <span style="color: rgb(255, 191, 60); font-size: 21px"
+          >UC Merced Parking Map</span
+        >
+        <span style="color: rgb(255, 255, 255); font-size: 8px"
+          >Made by Flavio Herrera</span
+        >
+      </div>
+    </div>
     <div id="container">
       <div id="sidebar"></div>
       <!-- map renders here -->
@@ -189,6 +226,14 @@
             //edit3
             constraints: {
               minZoom: zoomLevel - 1, // Optional: Set a minimum zoom level
+              geometry: {
+                type: "extent",
+                xmin: -13406500, // Adjust to fit UC Merced's bounding coordinates
+                ymin: 4489300,
+                xmax: -13405000,
+                ymax: 4490700,
+                spatialReference: { wkid: 3857 },
+              },
             },
           });
 
@@ -1081,88 +1126,6 @@
                 },
               ],
             },
-            {
-              type: "FeatureCollection",
-              crs: { type: "name", properties: { name: "EPSG:3857" } },
-              properties: {
-                color: "#ff325685",
-                name: "Kolligian Library",
-                nameFontSize: 11,
-                nameOffset: [7, -10],
-                category: "/buildings",
-                content_url: `
-                <div>
-  <img
-    src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSk5Q2kWVCo84gZ3-s_IvKmijxuMmpcAP8ywg&s"
-    width="400"
-    height="400"
-  />
-  <h1>UC Merced Library</h1>
-  <p>
-    Situated in California’s Central Valley, located on the traditional homeland
-    of the Yokuts and Miwuk, and part of the world’s leading public research
-    university system, the UC Merced Library empowers researchers, celebrates
-    our region’s diversity, expands access to information, and fosters student
-    belonging. We provide valuable expertise, advance critical inquiry, invest
-    in collections, preserve unique resources, forge collaborations, and create
-    welcoming space and services.
-  </p>
-  <br />
-  <p>
-    For more information about the library please contact UC Merced Library at
-    (209) 228 - 4444 or visit our website
-    <a href="https://library.ucmerced.edu/" target="_blank">here</a>.
-  </p>
-</div>
-
-                `,
-              },
-              features: [
-                {
-                  type: "Feature",
-                  id: 0,
-                  geometry: {
-                    type: "Polygon",
-                    coordinates: [
-                      [
-                        [-13405687.826927731, 4490326.3892642558],
-                        [-13405689.055424059, 4490323.8205901235],
-                        [-13405693.634364903, 4490326.221742034],
-                        [-13405698.5483502, 4490316.840497382],
-                        [-13405693.634364903, 4490314.8302306756],
-                        [-13405702.190497819, 4490298.7282870412],
-                        [-13405703.446695404, 4490299.2455448732],
-                        [-13405706.106878523, 4490294.5902244225],
-                        [-13405604.242169736, 4490242.1591039076],
-                        [-13405591.192207776, 4490268.034028478],
-                        [-13405594.735040275, 4490269.801162295],
-                        [-13405590.305806905, 4490273.8126396686],
-                        [-13405579.898898393, 4490261.9983912185],
-                        [-13405515.189405907, 4490321.4139928892],
-                        [-13405522.667636391, 4490328.5990114138],
-                        [-13405524.389942406, 4490326.7810217291],
-                        [-13405529.748227792, 4490332.4263581187],
-                        [-13405533.671258165, 4490328.5990114138],
-                        [-13405547.971935483, 4490344.917001918],
-                        [-13405543.278580958, 4490348.9183736518],
-                        [-13405551.394268032, 4490358.1008222923],
-                        [-13405612.140693268, 4490301.2650510147],
-                        [-13405608.42893276, 4490297.2783452794],
-                        [-13405611.728275431, 4490294.4372446388],
-                        [-13405613.744540401, 4490296.4535096064],
-                        [-13405628.461703196, 4490283.3597609103],
-                        [-13405625.751560066, 4490280.72595983],
-                        [-13405626.553151697, 4490279.6571709886],
-                        [-13405632.813200623, 4490282.8635375202],
-                        [-13405626.33790803, 4490294.5240300521],
-                        [-13405687.826927731, 4490326.3892642558],
-                      ],
-                    ],
-                  },
-                  properties: { FID: 0, Id: 0 },
-                },
-              ],
-            },
           ];
 
           geojsonPolygonsArray.forEach((featureCollection, fcIndex) => {
@@ -1687,6 +1650,7 @@
                 description: props.description || "",
                 content_url: props.content_url || null,
                 category: props.category || "/Uncategorized",
+                visible: true,
               },
               symbol: {
                 type: "picture-marker",
@@ -1828,6 +1792,36 @@
                 //
               }
             });
+            // pointsLayer.graphics.forEach((point) => {
+            //   console.log("hiding point layer");
+            //   point.visible = false;
+            // });
+            const listItems = document.querySelectorAll(".list-item");
+
+            // Iterate over points layer
+            pointsLayer.graphics.forEach((point) => {
+              console.log("Checking point:", point.attributes.name);
+
+              listItems.forEach((item) => {
+                const itemName = item.querySelector("div").textContent.trim();
+                const button = item.querySelector("button"); // Select the button inside the item
+                const imgContainer = button.querySelector("div"); // The div inside the button that contains the image
+
+                if (itemName === point.attributes.name) {
+                  console.log("Match found:", itemName);
+
+                  // Update background color
+                  item.style.opacity = "0.5"; // Light green
+
+                  const img = imgContainer.querySelector("img");
+                  if (img) {
+                    img.remove();
+                  }
+                }
+              });
+
+              point.visible = false;
+            });
           }
 
           function showLabel(labelName) {
@@ -1846,6 +1840,63 @@
                 label.attributes.visible = graphic.visible;
               }
             });
+            // pointsLayer.graphics.forEach((point) => {
+            //   console.log("hiding point layer");
+            //   console.log(point.attributes.name);
+            //   point.visible = true;
+            // });
+            // Get all sidebar items
+
+            // Get all sidebar items
+            const listItems = document.querySelectorAll(".list-item");
+
+            // Iterate over points layer
+            pointsLayer.graphics.forEach((point) => {
+              console.log("Checking point:", point.attributes.name);
+              if (point.attributes.visible == true) {
+                listItems.forEach((item) => {
+                  const itemName = item.querySelector("div").textContent.trim();
+                  const button = item.querySelector("button"); // Select the button inside the item
+                  const imgContainer = button.querySelector("div"); // The div inside the button that contains the image
+
+                  if (itemName === point.attributes.name) {
+                    console.log("Match found:", itemName);
+
+                    // Update background color
+                    item.style.opacity = "1"; // Light green
+
+                    if (!imgContainer.querySelector("img")) {
+                      const img = document.createElement("img");
+                      img.style.height = "15px";
+                      img.style.display = "block";
+                      img.src =
+                        "https://cdn.pixabay.com/photo/2016/03/31/14/37/check-mark-1292787_1280.png";
+                      imgContainer.appendChild(img);
+                    }
+                  }
+                });
+                point.visible = true;
+              }
+            });
+
+            // const listItems = document.querySelectorAll(".list-item");
+
+            // // Iterate over points layer
+            // pointsLayer.graphics.forEach((point) => {
+            //   console.log("Checking point:", point.attributes.name);
+
+            //   listItems.forEach((item) => {
+            //     const itemName = item.querySelector("div").textContent.trim();
+
+            //     if (itemName === point.attributes.name) {
+            //       console.log("Match found:", itemName);
+
+            //       // Update background color
+            //       item.style.opacity = "1"; // Light green
+            //     }
+            //   });
+            //   point.visible = true;
+            // });
           }
 
           view.watch("zoom", (newZoom) => {
@@ -1937,7 +1988,7 @@
               const headerDiv = document.createElement("div");
               headerDiv.style.fontWeight = "bold";
               headerDiv.style.marginBottom = "8px";
-              headerDiv.textContent = `Current Category: ${currentName}`;
+              headerDiv.textContent = `${currentName}`;
               sidebar.appendChild(headerDiv);
 
               if (pathStack.length > 1) {
@@ -1982,7 +2033,7 @@
                   listItem.className = "list-item";
                   listItem.style.display = "flex";
                   listItem.style.alignItems = "center";
-                  listItem.style.marginLeft = "10px";
+                  // listItem.style.marginLeft = "10px";
                   listItem.style.marginBottom = "4px";
 
                   listItem.classList.add("hover-effect");
@@ -2012,6 +2063,10 @@
                     const isVisible = feature.visible;
 
                     feature.visible = !isVisible;
+
+                    if (feature.geometry.type === "point") {
+                      feature.attributes.visible = !isVisible;
+                    }
 
                     const graphic = labelsLayer.graphics.find(
                       (g) =>
